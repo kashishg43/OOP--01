@@ -27,8 +27,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return setup;
 		}
 		@Override  public ImmutableSet<Piece> getPlayers() {
-
-
+			List<Piece> players = new ArrayList<>();
+			players.add(mrX.piece());
+			for (Player detective : detectives)
+				players.add(detective.piece());
+			return (ImmutableSet<Piece>) Collections.unmodifiableList(players);
 		}
 
 		@Nonnull
@@ -68,6 +71,4 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			GameSetup setup,
 			Player mrX,
 			ImmutableList<Player> detectives) {return null;}
-
-
 }
