@@ -8,7 +8,6 @@ import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.Piece.*;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 
-
 /**
  * cw-model
  * Stage 1: Complete this class
@@ -71,7 +70,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.mrX = mrX;
 			this.detectives = detectives;
 
-			if (setup == null || remaining == null || log == null || setup.moves.isEmpty() || !findPieceDuplicates(detectives) || !findLocationDuplicates(detectives)) {
+			if (setup == null || remaining == null || log == null || setup.moves.isEmpty()|| setup.graph.nodes().isEmpty()||!findPieceDuplicates(detectives) || !findLocationDuplicates(detectives)) {
 				throw new IllegalArgumentException("Illegal input");
 			}
 
@@ -81,59 +80,60 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 
 			for (Player detective : detectives)
-				if (detective.has (Ticket.DOUBLE) || detective.has (Ticket.SECRET)) {
+				if (detective.has (Ticket.DOUBLE) || detective.has (Ticket.SECRET) || detective.isMrX()) {
 					throw new IllegalArgumentException("illegal detective tickets");
 				}
-
 		}
 
-
-		@Override public GameSetup getSetup() {
-			this.setup = setup;
-			/*this.mrX = mrX;
-			this.detectives = detectives;*/
-			return setup;
-		}
+		@Nonnull
+		@Override public GameSetup getSetup() {return setup;}
+		@Nonnull
 		@Override  public ImmutableSet<Piece> getPlayers() {
-			List<Piece> players = new ArrayList<>();
+			Set<Piece> players = new HashSet<>();
 			players.add(mrX.piece());
 			for (Player detective : detectives)
 				players.add(detective.piece());
-			return (ImmutableSet<Piece>) Collections.unmodifiableList(players);
+			return ImmutableSet.copyOf(players);
 		}
 
 		@Nonnull
 		@Override
 		public Optional<Integer> getDetectiveLocation(Detective detective) {
-			/*for (Piece.Detective detective : detectives)*/
-			return null;
+			for (Player pDetective : detectives) /*compares each detective player to given detective value*/
+				if (pDetective.piece() == detective) return Optional.of(pDetective.location());
+			/*which then allows it to return the location using the player class*/
+			return Optional.empty();
 		}
 
 		@Nonnull
 		@Override
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
-			return null;
+			if (mrX.piece() == piece) return Optional.of(mrX.tickets());
+			else {
+				for (Player Detective : detectives)
+					if (Detective.piece() == piece) return Optional.of(Detective.tickets());
+			}
+			return Optional.empty();
 		}
 
 		@Nonnull
 		@Override
-		public ImmutableList<LogEntry> getMrXTravelLog() {
-			return null;
-		}
+		public ImmutableList<LogEntry> getMrXTravelLog() {return log;}
 
-
+		@Nonnull
 		@Override
 		public ImmutableSet<Piece> getWinner() {
 			return winner;
 		}
-
 		@Nonnull
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
 			return null;
 		}
 
-		@Override public GameState advance(Move move) {  return null;  }
+		@Nonnull
+		@Override
+		public GameState advance(Move move) { return null; }
 	}
 
 	@Nonnull
