@@ -20,9 +20,43 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private ImmutableList<LogEntry> log;
 		private Player mrX; /*players that are in the game*/
 		private List<Player> detectives;
-		private Set<Piece> pieces; /*which pieces are in the game*/
+		private List<Piece> pieces; /*which pieces are in the game*/
 		private ImmutableSet<Move> moves;
 		private ImmutableSet<Piece> winner;
+
+		private boolean findPieceDuplicates(List<Player> detectives) {
+			final List<Piece> duplicates = new ArrayList<>(); /*list of duplicates*/
+			final Set<Piece> pieceSet = new HashSet<> (); /*allows the use of contains to check for duplicates*/
+
+			for (Player detective: detectives) { /*loops through all detectives*/
+				if (pieceSet.contains(detective.piece())) { /*contains returns true if item exists*/
+					duplicates.add(detective.piece());
+				}
+				else {
+					pieceSet.add(detective.piece()); /*adds new items to the set*/
+				}
+
+			}
+			if (duplicates.isEmpty()) return true;
+			else return false;
+		}
+
+		private boolean findLocationDuplicates(List<Player> detectives) {
+			final List<Integer> duplicates = new ArrayList<>(); /*list of duplicates*/
+			final Set<Integer> locationSet = new HashSet<> (); /*allows the use of contains to check for duplicates*/
+
+			for (Player detective: detectives) { /*loops through all detectives*/
+				if (locationSet.contains(detective.location())) { /*contains returns true if item exists*/
+					duplicates.add(detective.location());
+				}
+				else {
+					locationSet.add(detective.location()); /*adds new items to the set*/
+				}
+
+			}
+			if (duplicates.isEmpty()) return true;
+			else return false;
+		}
 
 		private MyGameState(
 				final GameSetup setup,
@@ -37,13 +71,22 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.mrX = mrX;
 			this.detectives = detectives;
 
-			if (setup == null || remaining == null || log == null) {
-				throw new IllegalArgumentException("Illegal null input");
+			if (setup == null || remaining == null || log == null || setup.moves.isEmpty() || !findPieceDuplicates(detectives) || !findLocationDuplicates(detectives)) {
+				throw new IllegalArgumentException("Illegal input");
 			}
+
+
 			if (mrX == null || detectives == null) {
 				throw new NullPointerException("Players cannot be null");
 			}
+
+			for (Player detective : detectives)
+				if (detective.has (Ticket.DOUBLE) || detective.has (Ticket.SECRET)) {
+					throw new IllegalArgumentException("illegal detective tickets");
+				}
+
 		}
+
 
 		@Override public GameSetup getSetup() {
 			this.setup = setup;
@@ -78,10 +121,10 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return null;
 		}
 
-		@Nonnull
+
 		@Override
 		public ImmutableSet<Piece> getWinner() {
-			return null;
+			return winner;
 		}
 
 		@Nonnull
