@@ -82,8 +82,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						}
 					}
 				}
-				else
-					temp = true;
+				temp = true;
 			}
 			return singleMoves;
 		}
@@ -115,20 +114,19 @@ public final class MyGameStateFactory implements Factory<GameState> {
 										Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, Ticket.SECRET, destination, Ticket.SECRET, destination2);
 										doubleMoves.add(newMove);
 									}
-									else {
-										if (player.has(t2.requiredTicket())) {
-											Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, Ticket.SECRET, destination, t2.requiredTicket(), destination2);
-											doubleMoves.add(newMove);
-										}
-										if (player.has(t.requiredTicket())) {
+									if (player.has(t2.requiredTicket())) {
+										Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, Ticket.SECRET, destination, t2.requiredTicket(), destination2);
+										doubleMoves.add(newMove);
+									}
+									if (player.has(t.requiredTicket())) {
 											Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, t.requiredTicket(), destination, Ticket.SECRET, destination2);
 											doubleMoves.add(newMove);
-										}
 									}
 								}
 							}
 						}
 					}
+					temp = true;
 				}
 			}
 			return doubleMoves;
@@ -207,11 +205,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
 			Set<Move> allMoves = new HashSet<>(Set.of());
-			for (Player detective : detectives) {
-				allMoves.addAll (makeSingleMoves(setup, detectives, detective, detective.location()));
-			}
+			/*for (Player detective : detectives) {
+				allMoves.addAll(makeSingleMoves(setup, detectives, detective, detective.location()));
+			}*/
 			allMoves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
-			if (mrX.has(Ticket.DOUBLE))
+			if (mrX.has(Ticket.DOUBLE) && setup.moves.size() > 1)
 				allMoves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location()));
 
 			return ImmutableSet.copyOf(allMoves);
