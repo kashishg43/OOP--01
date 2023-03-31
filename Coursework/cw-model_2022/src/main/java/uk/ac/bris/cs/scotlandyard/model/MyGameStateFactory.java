@@ -65,28 +65,73 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			for(int destination : setup.graph.adjacentNodes(source)) {
 				for (Player detective: detectives) {
 					if (detective.location() == destination) {
-						temp = false;
+						temp = false;/*item is not added to the set*/
 						break;
 					}
 				}
 				if (temp) {
-					for (Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of())) {
+					for (Transport t : Objects.requireNonNull(setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of()))) {
 						if (player.has(t.requiredTicket())) {
 							Move.SingleMove newMove = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
 							singleMoves.add(newMove);
 						}
+
+						if (player.has(Ticket.SECRET)) {
+							Move.SingleMove newMove = new Move.SingleMove(player.piece(), source, Ticket.SECRET, destination);
+							singleMoves.add(newMove);
+						}
 					}
 				}
-						// TODO find out if the player has the required tickets
-						//  if it does, construct a SingleMove and add it the collection of moves to return
 				else
 					temp = true;
-				// TODO consider the rules of secret moves here
-				//  add moves to the destination via a secret ticket if there are any left with the player
 			}
+			return singleMoves;
+		}
 
-			// TODO return the collection of moves
-			return null;
+		private static Set<Move.DoubleMove> makeDoubleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
+			final Set<Move.DoubleMove> doubleMoves = new HashSet<> ();
+			boolean temp = true;
+
+			for(int destination : setup.graph.adjacentNodes(source)) {
+				for (int destination2 : setup.graph.adjacentNodes(destination)) {
+					for (Player detective : detectives) {
+						if (detective.location() == destination || detective.location() == destination2) {
+							temp = false;/*item is not added to the set*/
+							break;
+						}
+					}
+					if (temp) {
+						for (Transport t : Objects.requireNonNull(setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of()))) {
+							for (Transport t2 : Objects.requireNonNull(setup.graph.edgeValueOrDefault(destination, destination2, ImmutableSet.of()))) {
+								if (player.has(t.requiredTicket()) && player.has(t2.requiredTicket())) {
+									if (t != t2 || player.hasAtLeast(t.requiredTicket(), 2)) {
+										Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, t.requiredTicket(), destination, t2.requiredTicket(), destination2);
+										doubleMoves.add(newMove);
+									}
+								}
+
+								if (player.has(Ticket.SECRET)) {
+									if (player.hasAtLeast(Ticket.SECRET, 2)) {
+										Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, Ticket.SECRET, destination, Ticket.SECRET, destination2);
+										doubleMoves.add(newMove);
+									}
+									else {
+										if (player.has(t2.requiredTicket())) {
+											Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, Ticket.SECRET, destination, t2.requiredTicket(), destination2);
+											doubleMoves.add(newMove);
+										}
+										if (player.has(t.requiredTicket())) {
+											Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, t.requiredTicket(), destination, Ticket.SECRET, destination2);
+											doubleMoves.add(newMove);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			return doubleMoves;
 		}
 		private MyGameState(
 				final GameSetup setup,
@@ -161,7 +206,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
-			return null;
+			Set<Move> allMoves = new HashSet<>(Set.of());
+			for (Player detective : detectives) {
+				allMoves.addAll (makeSingleMoves(setup, detectives, detective, detective.location()));
+			}
+			allMoves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
+			if (mrX.has(Ticket.DOUBLE))
+				allMoves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location()));
+
+			return ImmutableSet.copyOf(allMoves);
 		}
 
 		@Nonnull
