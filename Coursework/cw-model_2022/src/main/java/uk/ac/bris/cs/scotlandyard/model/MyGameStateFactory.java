@@ -23,6 +23,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private ImmutableSet<Move> moves;
 		private ImmutableSet<Piece> winner;
 
+
+
 		private boolean findPieceDuplicates(List<Player> detectives) {
 			final List<Piece> duplicates = new ArrayList<>(); /*list of duplicates*/
 			final Set<Piece> pieceSet = new HashSet<> (); /*allows the use of contains to check for duplicates*/
@@ -36,8 +38,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 
 			}
-			if (duplicates.isEmpty()) return true;
-			else return false;
+			return duplicates.isEmpty();
 		}
 
 		private boolean findLocationDuplicates(List<Player> detectives) {
@@ -53,10 +54,40 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				}
 
 			}
-			if (duplicates.isEmpty()) return true;
-			else return false;
+			return duplicates.isEmpty();
 		}
 
+		private static Set<Move.SingleMove> makeSingleMoves(GameSetup setup, List<Player> detectives, Player player, int source){
+
+			final Set<Move.SingleMove> singleMoves = new HashSet<> ();
+			boolean temp = true;/*used to check whether a detective is at the location yet*/
+
+			for(int destination : setup.graph.adjacentNodes(source)) {
+				for (Player detective: detectives) {
+					if (detective.location() == destination) {
+						temp = false;
+						break;
+					}
+				}
+				if (temp) {
+					for (Transport t : setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of())) {
+						if (player.has(t.requiredTicket())) {
+							Move.SingleMove newMove = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
+							singleMoves.add(newMove);
+						}
+					}
+				}
+						// TODO find out if the player has the required tickets
+						//  if it does, construct a SingleMove and add it the collection of moves to return
+				else
+					temp = true;
+				// TODO consider the rules of secret moves here
+				//  add moves to the destination via a secret ticket if there are any left with the player
+			}
+
+			// TODO return the collection of moves
+			return null;
+		}
 		private MyGameState(
 				final GameSetup setup,
 				final ImmutableSet<Piece> remaining,
@@ -69,6 +100,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.log = log;
 			this.mrX = mrX;
 			this.detectives = detectives;
+			/*this.winner = winner;how do we check if winner is empty, error produced apparently its always null*/
 
 			if (setup == null || remaining == null || log == null || setup.moves.isEmpty()|| setup.graph.nodes().isEmpty()||!findPieceDuplicates(detectives) || !findLocationDuplicates(detectives)) {
 				throw new IllegalArgumentException("Illegal input");
@@ -106,12 +138,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 		@Nonnull
-		@Override
+		@Override /*how to return ticket board type?*/
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
-			if (mrX.piece() == piece) return Optional.of(mrX.tickets());
-			else {
+			if (mrX.piece() == piece) {
+				return null;
+			} else {
 				for (Player Detective : detectives)
-					if (Detective.piece() == piece) return Optional.of(Detective.tickets());
+					if (Detective.piece() == piece) return null;
 			}
 			return Optional.empty();
 		}
