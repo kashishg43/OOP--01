@@ -19,10 +19,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private ImmutableList<LogEntry> log;
 		private Player mrX; /*players that are in the game*/
 		private List<Player> detectives;
-		private List<Piece> pieces; /*which pieces are in the game*/
 		private ImmutableSet<Move> moves;
 		private ImmutableSet<Piece> winner;
-
 
 
 		private boolean findPieceDuplicates(List<Player> detectives) {
@@ -143,7 +141,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			this.log = log;
 			this.mrX = mrX;
 			this.detectives = detectives;
-			/*this.winner = winner;how do we check if winner is empty, error produced apparently its always null*/
+			this.winner = ImmutableSet.of();
+			this.moves = ImmutableSet.of();
 
 			if (setup == null || remaining == null || log == null || setup.moves.isEmpty()|| setup.graph.nodes().isEmpty()||!findPieceDuplicates(detectives) || !findLocationDuplicates(detectives)) {
 				throw new IllegalArgumentException("Illegal input");
@@ -205,19 +204,82 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
 			Set<Move> allMoves = new HashSet<>(Set.of());
-			/*for (Player detective : detectives) {
-				allMoves.addAll(makeSingleMoves(setup, detectives, detective, detective.location()));
-			}*/
-			allMoves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
-			if (mrX.has(Ticket.DOUBLE) && setup.moves.size() > 1)
-				allMoves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location()));
+			if (remaining.contains(mrX.piece())) {
+				allMoves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
+				if (mrX.has(Ticket.DOUBLE) && setup.moves.size() > 1)
+					allMoves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location()));
 
+			}
+			else {
+				for (Piece item : remaining) {
+					for (Player Detective : detectives) {
+						if (item == Detective.piece()) {
+							allMoves.addAll(makeSingleMoves(setup, detectives, Detective, Detective.location()));
+						}
+					}
+				}
+			}
 			return ImmutableSet.copyOf(allMoves);
 		}
 
 		@Nonnull
 		@Override
-		public GameState advance(Move move) { return null; }
+		public GameState advance(Move move) {
+			moves = getAvailableMoves();
+			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
+			//using an anonymous inner class
+
+			//TODO the immutable sets are causing problems - i.e. log and remaining
+			move.accept(new Move.Visitor() {
+				@Override
+				public Object visit(Move.SingleMove move) {
+					Set<Piece> newRemaining = new HashSet<>(Set.copyOf(remaining));
+					List<LogEntry> newLog = new ArrayList<>(List.copyOf(log));
+					if (move.commencedBy() == mrX.piece()) {
+						mrX.use(move.ticket);
+						mrX.at(move.destination);
+						newRemaining.remove(mrX.piece());
+						if (Set.of(3, 8, 13, 18, 24).contains(log.size()+1)) {
+							newLog.add(LogEntry.reveal(move.ticket, move.destination));
+						}
+						else {
+							newLog.add(LogEntry.hidden(move.ticket));
+						}
+					}
+					else {
+						for (Player Detective : detectives)
+							if (Detective.piece() == move.commencedBy()) {
+								Detective.use(move.ticket);
+								Detective.at(move.destination);
+								mrX.give(move.ticket);
+								newRemaining.remove(Detective.piece());
+								if (newRemaining.isEmpty()) {
+									newRemaining = getPlayers();
+								}
+							}
+					}
+					//TODO return the new game state
+					remaining = ImmutableSet.copyOf(newRemaining);
+					log = ImmutableList.copyOf(newLog);
+					//MyGameState newGameState = new MyGameState(setup, Remaining, Log, mrX, detectives);
+					return null;
+				}
+
+				@Override
+				public Object visit(Move.DoubleMove move) {
+					Set<Piece> newRemaining = new HashSet<>(Set.copyOf(remaining));
+					mrX.use(move.ticket1);
+					mrX.use(move.ticket2);
+					mrX.at(move.destination2);
+					newRemaining.remove(mrX.piece());
+					remaining = ImmutableSet.copyOf(newRemaining);
+					//MyGameState newGameState =  new MyGameState(setup, Remaining, log, mrX, detectives);
+					return null;
+				}
+			});
+
+		return new MyGameState(setup, remaining, log, mrX, detectives);
+		}
 	}
 
 	@Nonnull
