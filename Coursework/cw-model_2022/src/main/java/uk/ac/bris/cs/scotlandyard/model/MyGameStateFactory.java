@@ -225,9 +225,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public GameState advance(Move move) {
-			System.out.println(remaining);
-			System.out.println(moves);
+			//TODO travel log needs to check moves instead, make a copy of moves and check the index
+			//TODO location needs to update properly, replace player with new player with new location
+			//TODO tickets need to update properly, same problem as above, new player instantiated
+			//TODO ensure that if a player has no tickets remaining, they are taken out of remaining
+			//System.out.println(remaining);
 			moves = getAvailableMoves();
+			//System.out.println(moves);
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
 			//using an anonymous inner class
 
@@ -236,28 +240,37 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				public Object visit(Move.SingleMove move) {
 					Set<Piece> newRemaining = new HashSet<>(Set.copyOf(remaining));
 					List<LogEntry> newLog = new ArrayList<>(List.copyOf(log));
+					ArrayList<Boolean> movesCopy = new ArrayList<>(List.copyOf(setup.moves));
 					if (move.commencedBy() == mrX.piece()) {
-						mrX.use(move.ticket);
-						mrX.at(move.destination);
+						mrX = mrX.use(move.ticket);
+						System.out.println("move destination" + move.destination);
+						mrX = mrX.at(move.destination);
+						System.out.println("mr x position " + mrX.location());
 						newRemaining.remove(mrX.piece());
 						newRemaining = getPlayers();
-						if (Set.of(3, 8, 13, 18, 24).contains(log.size()-1)) {
+						System.out.println("boolean" + movesCopy.get(log.size()));
+						if (movesCopy.get(log.size())) {
 							newLog.add(LogEntry.reveal(move.ticket, move.destination));
 						}
 						else {
 							newLog.add(LogEntry.hidden(move.ticket));
 						}
+						//System.out.println(newLog);
 					}
 					else {
-						for (Player Detective : detectives)
+						for (Player Detective : detectives) {
 							if (Detective.piece() == move.commencedBy()) {
-								Detective.use(move.ticket);
-								Detective.at(move.destination);
-								mrX.give(move.ticket);
+								List<Player> tempList = new ArrayList<>(detectives);
+
+								Player tempDetective = Detective.use(move.ticket);
+								tempDetective = Detective.at(move.destination);
+								tempList.set(tempList.indexOf(Detective), tempDetective);
+								mrX = mrX.give(move.ticket);
 								newRemaining.remove(Detective.piece());
+								detectives = tempList;
 							}
+						}
 					}
-					//TODO return the new game state
 					remaining = ImmutableSet.copyOf(newRemaining);
 					log = ImmutableList.copyOf(newLog);
 					//MyGameState newGameState = new MyGameState(setup, Remaining, Log, mrX, detectives);
@@ -268,16 +281,17 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				public Object visit(Move.DoubleMove move) {
 					Set<Piece> newRemaining = new HashSet<>(Set.copyOf(remaining));
 					List<LogEntry> newLog = new ArrayList<>(List.copyOf(log));
-					mrX.use(move.ticket1);
-					mrX.use(move.ticket2);
-					mrX.at(move.destination2);
+					ArrayList<Boolean> movesCopy = new ArrayList<>(List.copyOf(setup.moves));
+					mrX = mrX.use(move.ticket1);
+					mrX = mrX.use(move.ticket2);
+					mrX = mrX.at(move.destination2);
 					newRemaining.remove(mrX.piece());
 					newRemaining = getPlayers();
-					if (Set.of(3, 8, 13, 18, 24).contains(log.size()-1)) {
+					if (movesCopy.get(log.size())) {
 						newLog.add(LogEntry.reveal(move.ticket1, move.destination1));
 						newLog.add(LogEntry.hidden(move.ticket2));
 					}
-					else if (Set.of(2, 7, 12, 17, 23).contains(log.size()-1)){
+					else if (movesCopy.get(log.size()+1)){
 						newLog.add(LogEntry.hidden(move.ticket1));
 						newLog.add(LogEntry.reveal(move.ticket2, move.destination2));
 					}
