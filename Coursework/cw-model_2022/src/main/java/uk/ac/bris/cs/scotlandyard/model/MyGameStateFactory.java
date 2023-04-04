@@ -8,19 +8,20 @@ import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.Piece.*;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 
+
 /**
  * cw-model
  * Stage 1: Complete this class
  */
 public final class MyGameStateFactory implements Factory<GameState> {
 	private final class MyGameState implements GameState {
-		private GameSetup setup;
+		private final GameSetup setup;
 		private ImmutableSet<Piece> remaining; /*which pieces can still move in the current round*/
 		private ImmutableList<LogEntry> log;
 		private Player mrX; /*players that are in the game*/
 		private List<Player> detectives;
 		private ImmutableSet<Move> moves;
-		private ImmutableSet<Piece> winner;
+		private final ImmutableSet<Piece> winner;
 
 
 		private boolean findPieceDuplicates(List<Player> detectives) {
@@ -180,15 +181,35 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 		@Nonnull
-		@Override /*how to return ticket board type?*/
+		@Override
+
 		public Optional<TicketBoard> getPlayerTickets(Piece piece) {
-			if (mrX.piece() == piece) {
-				return null;
-			} else {
-				for (Player Detective : detectives)
-					if (Detective.piece() == piece) return null;
+			TicketBoard newTicketBoard = ticket -> {
+				if (mrX.piece() == piece) {
+					return mrX.tickets().get(ticket);
+				} else {
+					for (Player Detective : detectives)
+						if (Detective.piece() == piece)
+							return Detective.tickets().get(ticket);
+				}
+				return 0;
+			};
+			System.out.println(newTicketBoard);
+
+			boolean tempCheck = mrX.piece() == piece;
+
+			for (Player Detective : detectives)
+				if (Detective.piece() == piece) {
+					tempCheck = true;
+					//break;
+				}
+
+			if (!tempCheck) {
+				return Optional.empty();
 			}
-			return Optional.empty();
+			else {
+				return Optional.of(newTicketBoard);
+			}
 		}
 
 		@Nonnull
@@ -225,8 +246,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public GameState advance(Move move) {
-			//TODO travel log needs to check moves instead, make a copy of moves and check the index
-			//TODO location needs to update properly, replace player with new player with new location
 			//TODO tickets need to update properly, same problem as above, new player instantiated
 			//TODO ensure that if a player has no tickets remaining, they are taken out of remaining
 			//System.out.println(remaining);
@@ -235,7 +254,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
 			//using an anonymous inner class
 
-			move.accept(new Move.Visitor() {
+			move.accept(new Move.Visitor<>() {
 				@Override
 				public Object visit(Move.SingleMove move) {
 					Set<Piece> newRemaining = new HashSet<>(Set.copyOf(remaining));
@@ -243,19 +262,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					ArrayList<Boolean> movesCopy = new ArrayList<>(List.copyOf(setup.moves));
 					if (move.commencedBy() == mrX.piece()) {
 						mrX = mrX.use(move.ticket);
-						System.out.println("move destination" + move.destination);
 						mrX = mrX.at(move.destination);
-						System.out.println("mr x position " + mrX.location());
 						newRemaining.remove(mrX.piece());
 						newRemaining = getPlayers();
-						System.out.println("boolean" + movesCopy.get(log.size()));
 						if (movesCopy.get(log.size())) {
 							newLog.add(LogEntry.reveal(move.ticket, move.destination));
 						}
 						else {
 							newLog.add(LogEntry.hidden(move.ticket));
 						}
-						//System.out.println(newLog);
 					}
 					else {
 						for (Player Detective : detectives) {
@@ -263,7 +278,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 								List<Player> tempList = new ArrayList<>(detectives);
 
 								Player tempDetective = Detective.use(move.ticket);
-								tempDetective = Detective.at(move.destination);
+								tempDetective = tempDetective.at(move.destination);
 								tempList.set(tempList.indexOf(Detective), tempDetective);
 								mrX = mrX.give(move.ticket);
 								newRemaining.remove(Detective.piece());
@@ -284,28 +299,27 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					ArrayList<Boolean> movesCopy = new ArrayList<>(List.copyOf(setup.moves));
 					mrX = mrX.use(move.ticket1);
 					mrX = mrX.use(move.ticket2);
+					mrX = mrX.use(Ticket.DOUBLE);
 					mrX = mrX.at(move.destination2);
 					newRemaining.remove(mrX.piece());
 					newRemaining = getPlayers();
 					if (movesCopy.get(log.size())) {
 						newLog.add(LogEntry.reveal(move.ticket1, move.destination1));
-						newLog.add(LogEntry.hidden(move.ticket2));
-					}
-					else if (movesCopy.get(log.size()+1)){
-						newLog.add(LogEntry.hidden(move.ticket1));
-						newLog.add(LogEntry.reveal(move.ticket2, move.destination2));
 					}
 					else {
 						newLog.add(LogEntry.hidden(move.ticket1));
+					}
+					if (movesCopy.get(log.size()+1)){
+						newLog.add(LogEntry.reveal(move.ticket2, move.destination2));
+					}
+					else {
 						newLog.add(LogEntry.hidden(move.ticket2));
 					}
 					remaining = ImmutableSet.copyOf(newRemaining);
 					log = ImmutableList.copyOf(newLog);
-					//MyGameState newGameState =  new MyGameState(setup, Remaining, log, mrX, detectives);
 					return null;
 				}
 			});
-
 		return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 	}
