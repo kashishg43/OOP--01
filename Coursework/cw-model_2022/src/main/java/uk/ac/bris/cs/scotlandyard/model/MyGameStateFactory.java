@@ -204,7 +204,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
 			Set<Move> allMoves = new HashSet<>(Set.of());
-			if (remaining.contains(mrX.piece())) {
+			if (remaining.contains(mrX.piece()) && remaining.size() == 1) {
 				allMoves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
 				if (mrX.has(Ticket.DOUBLE) && setup.moves.size() > 1)
 					allMoves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location()));
@@ -225,11 +225,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public GameState advance(Move move) {
+			System.out.println(remaining);
+			System.out.println(moves);
 			moves = getAvailableMoves();
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
 			//using an anonymous inner class
 
-			//TODO the immutable sets are causing problems - i.e. log and remaining
 			move.accept(new Move.Visitor() {
 				@Override
 				public Object visit(Move.SingleMove move) {
@@ -239,7 +240,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						mrX.use(move.ticket);
 						mrX.at(move.destination);
 						newRemaining.remove(mrX.piece());
-						if (Set.of(3, 8, 13, 18, 24).contains(log.size()+1)) {
+						newRemaining = getPlayers();
+						if (Set.of(3, 8, 13, 18, 24).contains(log.size()-1)) {
 							newLog.add(LogEntry.reveal(move.ticket, move.destination));
 						}
 						else {
@@ -253,9 +255,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 								Detective.at(move.destination);
 								mrX.give(move.ticket);
 								newRemaining.remove(Detective.piece());
-								if (newRemaining.isEmpty()) {
-									newRemaining = getPlayers();
-								}
 							}
 					}
 					//TODO return the new game state
@@ -268,11 +267,26 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				@Override
 				public Object visit(Move.DoubleMove move) {
 					Set<Piece> newRemaining = new HashSet<>(Set.copyOf(remaining));
+					List<LogEntry> newLog = new ArrayList<>(List.copyOf(log));
 					mrX.use(move.ticket1);
 					mrX.use(move.ticket2);
 					mrX.at(move.destination2);
 					newRemaining.remove(mrX.piece());
+					newRemaining = getPlayers();
+					if (Set.of(3, 8, 13, 18, 24).contains(log.size()-1)) {
+						newLog.add(LogEntry.reveal(move.ticket1, move.destination1));
+						newLog.add(LogEntry.hidden(move.ticket2));
+					}
+					else if (Set.of(2, 7, 12, 17, 23).contains(log.size()-1)){
+						newLog.add(LogEntry.hidden(move.ticket1));
+						newLog.add(LogEntry.reveal(move.ticket2, move.destination2));
+					}
+					else {
+						newLog.add(LogEntry.hidden(move.ticket1));
+						newLog.add(LogEntry.hidden(move.ticket2));
+					}
 					remaining = ImmutableSet.copyOf(newRemaining);
+					log = ImmutableList.copyOf(newLog);
 					//MyGameState newGameState =  new MyGameState(setup, Remaining, log, mrX, detectives);
 					return null;
 				}
