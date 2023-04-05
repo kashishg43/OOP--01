@@ -21,7 +21,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private Player mrX; /*players that are in the game*/
 		private List<Player> detectives;
 		private ImmutableSet<Move> moves;
-		private final ImmutableSet<Piece> winner;
+		private ImmutableSet<Piece> winner;
 
 
 		private boolean findPieceDuplicates(List<Player> detectives) {
@@ -130,6 +130,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 			return doubleMoves;
 		}
+
+		private Set<Piece> detectiveWinner() {
+			Set<Piece> newWinners = new HashSet<>(Set.of());
+			for (Player detective:detectives) {
+				newWinners.add(detective.piece());
+			}
+			return newWinners;
+		}
+
 		private MyGameState(
 				final GameSetup setup,
 				final ImmutableSet<Piece> remaining,
@@ -219,11 +228,31 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public ImmutableSet<Piece> getWinner() {
+			if (getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())) {
+				winner = ImmutableSet.copyOf(detectiveWinner());
+			}
+			else if (log.size() == setup.moves.size() && remaining.contains(mrX.piece())) {
+				winner = ImmutableSet.of(mrX.piece());
+			}
+			else if (detectives.isEmpty() && !remaining.contains(mrX.piece())) {
+				winner = ImmutableSet.of(mrX.piece());
+			}
+			else {
+				winner = ImmutableSet.of();
+			}
+			for (Player detective:detectives) {
+				if (detective.location() == mrX.location()) winner = ImmutableSet.copyOf(detectiveWinner());
+				//System.out.println(winner);
+			}
+			System.out.println(winner);
 			return winner;
 		}
 		@Nonnull
 		@Override
 		public ImmutableSet<Move> getAvailableMoves() {
+			if (!winner.isEmpty()) {
+				return ImmutableSet.of();
+			}
 			Set<Move> allMoves = new HashSet<>(Set.of());
 			if (remaining.contains(mrX.piece()) && remaining.size() == 1) {
 				allMoves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
