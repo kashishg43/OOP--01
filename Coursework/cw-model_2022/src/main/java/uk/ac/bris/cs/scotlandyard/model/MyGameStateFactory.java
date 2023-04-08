@@ -15,25 +15,25 @@ import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
  */
 public final class MyGameStateFactory implements Factory<GameState> {
 	private final class MyGameState implements GameState {
-		private final GameSetup setup;
+		private GameSetup setup;
 		private ImmutableSet<Piece> remaining; /*which pieces can still move in the current round*/
 		private ImmutableList<LogEntry> log;
-		private Player mrX; /*players that are in the game*/
+		private Player mrX; //players that are in the game
 		private List<Player> detectives;
 		private ImmutableSet<Move> moves;
 		private ImmutableSet<Piece> winner;
 
 
 		private boolean findPieceDuplicates(List<Player> detectives) {
-			final List<Piece> duplicates = new ArrayList<>(); /*list of duplicates*/
-			final Set<Piece> pieceSet = new HashSet<> (); /*allows the use of contains to check for duplicates*/
+			final List<Piece> duplicates = new ArrayList<>(); //list of duplicates
+			final Set<Piece> pieceSet = new HashSet<> (); //allows the use of contains to check for duplicates
 
-			for (Player detective: detectives) { /*loops through all detectives*/
-				if (pieceSet.contains(detective.piece())) { /*contains returns true if item exists*/
+			for (Player detective: detectives) { //loops through all detectives
+				if (pieceSet.contains(detective.piece())) { //contains returns true if item exists
 					duplicates.add(detective.piece());
 				}
 				else {
-					pieceSet.add(detective.piece()); /*adds new items to the set*/
+					pieceSet.add(detective.piece()); //adds new items to the set
 				}
 
 			}
@@ -41,15 +41,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		}
 
 		private boolean findLocationDuplicates(List<Player> detectives) {
-			final List<Integer> duplicates = new ArrayList<>(); /*list of duplicates*/
-			final Set<Integer> locationSet = new HashSet<> (); /*allows the use of contains to check for duplicates*/
+			final List<Integer> duplicates = new ArrayList<>(); //list of duplicates
+			final Set<Integer> locationSet = new HashSet<> (); //allows the use of contains to check for duplicates
 
-			for (Player detective: detectives) { /*loops through all detectives*/
-				if (locationSet.contains(detective.location())) { /*contains returns true if item exists*/
+			for (Player detective: detectives) { //loops through all detectives
+				if (locationSet.contains(detective.location())) { //contains returns true if item exists
 					duplicates.add(detective.location());
 				}
 				else {
-					locationSet.add(detective.location()); /*adds new items to the set*/
+					locationSet.add(detective.location()); //adds new items to the set
 				}
 
 			}
@@ -139,6 +139,17 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return newWinners;
 		}
 
+		private boolean checkDetectivesTickets() {
+
+			for (Player detective:detectives) {
+				if (detective.tickets().get(Ticket.UNDERGROUND) != 0 || detective.tickets().get(Ticket.TAXI) != 0 || detective.tickets().get(Ticket.BUS) != 0) {
+					return true;
+				}
+				//this means at least one detective can make moves
+			}
+			return false;
+		}
+
 		private MyGameState(
 				final GameSetup setup,
 				final ImmutableSet<Piece> remaining,
@@ -163,10 +174,15 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				throw new NullPointerException("Players cannot be null");
 			}
 
-			for (Player detective : detectives)
-				if (detective.has (Ticket.DOUBLE) || detective.has (Ticket.SECRET) || detective.isMrX()) {
+			//boolean tempCheck = true;//checks if none of the detectives can move
+			for (Player detective : detectives) {
+				//if (getPlayerTickets(detective.piece()).isPresent()) tempCheck = false;
+				if (detective.has(Ticket.DOUBLE) || detective.has(Ticket.SECRET) || detective.isMrX()) {
 					throw new IllegalArgumentException("illegal detective tickets");
+
 				}
+			//if (tempCheck) winner = ImmutableSet.of(mrX.piece());
+			}
 		}
 
 		@Nonnull
@@ -228,23 +244,34 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public ImmutableSet<Piece> getWinner() {
-			if (getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())) {
-				winner = ImmutableSet.copyOf(detectiveWinner());
+			//todo check if a detectives tickets are empty - no longer in game - in advance??
+			//Set<Piece> tempWinner = Set.copyOf(winner);//checks if none of the detectives can move
+			for (Player detective:detectives) {
+				if (detective.location() == mrX.location()) winner = ImmutableSet.copyOf(detectiveWinner());
+			}
+			if (!checkDetectivesTickets()) {
+				winner = ImmutableSet.of(mrX.piece());
+				System.out.println("st 1");
 			}
 			else if (log.size() == setup.moves.size() && remaining.contains(mrX.piece())) {
 				winner = ImmutableSet.of(mrX.piece());
+				System.out.println("st 2");
 			}
-			else if (detectives.isEmpty() && !remaining.contains(mrX.piece())) {
-				winner = ImmutableSet.of(mrX.piece());
+			else if (getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())) {
+				winner = ImmutableSet.copyOf(detectiveWinner());
+				System.out.println("st 3");
+				System.out.println(getAvailableMoves());
 			}
-			else {
-				winner = ImmutableSet.of();
-			}
-			for (Player detective:detectives) {
-				if (detective.location() == mrX.location()) winner = ImmutableSet.copyOf(detectiveWinner());
-				//System.out.println(winner);
-			}
-			System.out.println(winner);
+
+
+			//boolean check
+			//for (Player detective:detectives) {
+
+			//}
+			//else if (detectives.isEmpty() && !remaining.contains(mrX.piece())) {
+			//	winner = ImmutableSet.of(mrX.piece());
+			//}
+
 			return winner;
 		}
 		@Nonnull
@@ -275,8 +302,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public GameState advance(Move move) {
-			//TODO tickets need to update properly, same problem as above, new player instantiated
-			//TODO ensure that if a player has no tickets remaining, they are taken out of remaining
 			//System.out.println(remaining);
 			moves = getAvailableMoves();
 			//System.out.println(moves);
