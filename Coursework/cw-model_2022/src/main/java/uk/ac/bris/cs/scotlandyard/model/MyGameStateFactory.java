@@ -150,6 +150,12 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			return false;
 		}
 
+		private ImmutableSet<Move> getMrXMoves() {
+
+			return null;
+		}
+
+
 		private MyGameState(
 				final GameSetup setup,
 				final ImmutableSet<Piece> remaining,
@@ -244,8 +250,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public ImmutableSet<Piece> getWinner() {
-			//todo check if a detectives tickets are empty - no longer in game - in advance??
 			//Set<Piece> tempWinner = Set.copyOf(winner);//checks if none of the detectives can move
+			System.out.println(getAvailableMoves());
 			for (Player detective:detectives) {
 				if (detective.location() == mrX.location()) winner = ImmutableSet.copyOf(detectiveWinner());
 			}
@@ -260,7 +266,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			else if (getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())) {
 				winner = ImmutableSet.copyOf(detectiveWinner());
 				System.out.println("st 3");
-				System.out.println(getAvailableMoves());
+				//System.out.println(getAvailableMoves());
 			}
 
 
@@ -285,7 +291,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				allMoves.addAll(makeSingleMoves(setup, detectives, mrX, mrX.location()));
 				if (mrX.has(Ticket.DOUBLE) && setup.moves.size() > 1)
 					allMoves.addAll(makeDoubleMoves(setup, detectives, mrX, mrX.location()));
-
 			}
 			else {
 				for (Piece item : remaining) {

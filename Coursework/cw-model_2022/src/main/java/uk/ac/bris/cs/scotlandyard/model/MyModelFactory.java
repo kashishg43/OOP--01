@@ -14,10 +14,12 @@ public final class MyModelFactory implements Factory<Model> {
 
 	private final class MyModel implements Model {
 
-		private final GameSetup setup;
-		private final Player mrX;
-		private final ImmutableList<Player> detectives;
+		private GameSetup setup;
+		private Player mrX;
+		private ImmutableList<Player> detectives;
 		private ImmutableSet<Observer> observers;
+		private Board.GameState state;
+
 
 
 		private MyModel(
@@ -29,11 +31,13 @@ public final class MyModelFactory implements Factory<Model> {
 			this.mrX = mrX;
 			this.detectives = detectives;
 			this.observers = ImmutableSet.of();
+			//board.GameState state = gameStateFactory.build();
 		}
 
 		@Nonnull
 		@Override
 		public Board getCurrentBoard() {
+			//return new ImmutableBoard(setup, detectiveLocations, tickets, log, winner, availableMoves);
 			return null;
 		}
 
@@ -48,8 +52,8 @@ public final class MyModelFactory implements Factory<Model> {
 		@Override
 		public void unregisterObserver(@Nonnull Observer observer) {
 			List<Observer> copyObservers = new ArrayList<>(List.copyOf(observers));
+			if (observer == null) throw new NullPointerException("Null Observer");
 			if (copyObservers.isEmpty()) throw new IllegalArgumentException("Empty Observers");
-			if (copyObservers == null) throw new IllegalArgumentException("Empty Observers");
 			else copyObservers.remove(observer);
 			observers = ImmutableSet.copyOf(copyObservers);
 		}
@@ -62,6 +66,7 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void chooseMove(@Nonnull Move move) {
+			//Board.GameState newModel = Board.GameState.advance(move);
 			// TODO Advance the model with move, then notify all observers of what what just happened.
 			//  you may want to use getWinner() to determine whether to send out Event.MOVE_MADE or Event.GAME_OVER
 		}
@@ -71,7 +76,6 @@ public final class MyModelFactory implements Factory<Model> {
 	                                      Player mrX,
 	                                      ImmutableList<Player> detectives) {
 
-		// TODO
 		return new MyModelFactory.MyModel(setup, mrX, detectives);
 	}
 }
