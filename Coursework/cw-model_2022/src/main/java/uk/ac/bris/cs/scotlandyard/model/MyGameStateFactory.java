@@ -7,8 +7,6 @@ import javax.annotation.Nonnull;
 import uk.ac.bris.cs.scotlandyard.model.Board.GameState;
 import uk.ac.bris.cs.scotlandyard.model.Piece.*;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
-
-
 /**
  * cw-model
  * Stage 1: Complete this class
@@ -22,7 +20,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		private List<Player> detectives;
 		private ImmutableSet<Move> moves;
 		private ImmutableSet<Piece> winner;
-
 
 		private boolean findPieceDuplicates(List<Player> detectives) {
 			final List<Piece> duplicates = new ArrayList<>(); //list of duplicates
@@ -269,14 +266,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				//System.out.println(getAvailableMoves());
 			}
 
-
-			//boolean check
-			//for (Player detective:detectives) {
-
-			//}
-			//else if (detectives.isEmpty() && !remaining.contains(mrX.piece())) {
-			//	winner = ImmutableSet.of(mrX.piece());
-			//}
 
 			return winner;
 		}
