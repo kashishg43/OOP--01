@@ -14,7 +14,6 @@ import uk.ac.bris.cs.scotlandyard.model.*;
 
 public class MiniAI implements Ai {
 
-
 	@Nonnull @Override public String name() { return "MiniAI"; }
 
 	@Nonnull @Override public Move pickMove(
@@ -26,7 +25,7 @@ public class MiniAI implements Ai {
 
 	}
 
-	public int score(Board board) {
+	/*public int score(Board board) {
 		GameSetup setup = board.getSetup();
 		ImmutableSet<Move> moves = board.getAvailableMoves();
 		ImmutableSet<Piece> players = board.getPlayers();
@@ -34,7 +33,7 @@ public class MiniAI implements Ai {
 			for (Piece player :players) {
 				if (player.isDetective()) {
 					for (int node : setup.graph.adjacentNodes(move.source())) {
-						if (board.getDetectiveLocation(Detective(player.webColour())).hasValue(node))
+						//if (board.getDetectiveLocation(Piece.Detective.valueOf(player.webColour())).hasValue(node))
 						{
 
 						}
@@ -43,5 +42,5 @@ public class MiniAI implements Ai {
 			}
 		}
 		return 0;
-	}
+	}*/
 }

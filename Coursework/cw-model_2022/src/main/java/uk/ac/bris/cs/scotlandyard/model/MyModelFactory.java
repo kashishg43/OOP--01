@@ -31,14 +31,16 @@ public final class MyModelFactory implements Factory<Model> {
 			this.mrX = mrX;
 			this.detectives = detectives;
 			this.observers = ImmutableSet.of();
+			//this.state = MyGameStateFactory.build(setup, mrX, detectives);
 			//board.GameState state = gameStateFactory.build();
 		}
 
 		@Nonnull
 		@Override
 		public Board getCurrentBoard() {
+
 			//return new ImmutableBoard(setup, detectiveLocations, tickets, log, winner, availableMoves);
-			return null;
+			return state;
 		}
 
 		@Override
@@ -66,7 +68,17 @@ public final class MyModelFactory implements Factory<Model> {
 
 		@Override
 		public void chooseMove(@Nonnull Move move) {
-			//Board.GameState newModel = Board.GameState.advance(move);
+			state = state.advance(move);
+			if (state.getWinner().isEmpty()) {
+				for (Observer observer:observers) {
+					observer.onModelChanged(state, Observer.Event.MOVE_MADE);
+				}
+			}
+			else {
+				for (Observer observer:observers) {
+					observer.onModelChanged(state, Observer.Event.GAME_OVER);
+				}
+			}
 			// TODO Advance the model with move, then notify all observers of what what just happened.
 			//  you may want to use getWinner() to determine whether to send out Event.MOVE_MADE or Event.GAME_OVER
 		}

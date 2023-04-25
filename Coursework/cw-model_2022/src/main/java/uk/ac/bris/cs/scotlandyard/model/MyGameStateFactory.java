@@ -32,7 +32,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				else {
 					pieceSet.add(detective.piece()); //adds new items to the set
 				}
-
 			}
 			return duplicates.isEmpty();
 		}
@@ -115,8 +114,8 @@ public final class MyGameStateFactory implements Factory<GameState> {
 										doubleMoves.add(newMove);
 									}
 									if (player.has(t.requiredTicket())) {
-											Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, t.requiredTicket(), destination, Ticket.SECRET, destination2);
-											doubleMoves.add(newMove);
+										Move.DoubleMove newMove = new Move.DoubleMove(player.piece(), source, t.requiredTicket(), destination, Ticket.SECRET, destination2);
+										doubleMoves.add(newMove);
 									}
 								}
 							}
@@ -146,12 +145,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			}
 			return false;
 		}
-
-		private ImmutableSet<Move> getMrXMoves() {
-
-			return null;
-		}
-
 
 		private MyGameState(
 				final GameSetup setup,
@@ -184,7 +177,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					throw new IllegalArgumentException("illegal detective tickets");
 
 				}
-			//if (tempCheck) winner = ImmutableSet.of(mrX.piece());
+				//if (tempCheck) winner = ImmutableSet.of(mrX.piece());
 			}
 		}
 
@@ -368,7 +361,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					return null;
 				}
 			});
-		return new MyGameState(setup, remaining, log, mrX, detectives);
+			return new MyGameState(setup, remaining, log, mrX, detectives);
 		}
 	}
 
