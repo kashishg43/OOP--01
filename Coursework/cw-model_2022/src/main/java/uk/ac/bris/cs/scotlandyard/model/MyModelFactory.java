@@ -31,14 +31,14 @@ public final class MyModelFactory implements Factory<Model> {
 			this.mrX = mrX;
 			this.detectives = detectives;
 			this.observers = ImmutableSet.of();
-			//this.state = MyGameStateFactory.build(setup, mrX, detectives);
+			this.state = new MyGameStateFactory().build(setup, mrX, detectives);
 			//board.GameState state = gameStateFactory.build();
 		}
 
 		@Nonnull
 		@Override
 		public Board getCurrentBoard() {
-
+			//Board.GameState newGameState =
 			//return new ImmutableBoard(setup, detectiveLocations, tickets, log, winner, availableMoves);
 			return state;
 		}
@@ -79,8 +79,6 @@ public final class MyModelFactory implements Factory<Model> {
 					observer.onModelChanged(state, Observer.Event.GAME_OVER);
 				}
 			}
-			// TODO Advance the model with move, then notify all observers of what what just happened.
-			//  you may want to use getWinner() to determine whether to send out Event.MOVE_MADE or Event.GAME_OVER
 		}
 	}
 

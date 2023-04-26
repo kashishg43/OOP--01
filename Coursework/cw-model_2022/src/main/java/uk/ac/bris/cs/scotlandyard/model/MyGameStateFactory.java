@@ -64,10 +64,13 @@ public final class MyGameStateFactory implements Factory<GameState> {
 						break;
 					}
 				}
+				//System.out.println("temp:" + temp);
 				if (temp) {
 					for (Transport t : Objects.requireNonNull(setup.graph.edgeValueOrDefault(source, destination, ImmutableSet.of()))) {
+						//System.out.println("temp:" + player.piece() + player.has(t.requiredTicket()) );
 						if (player.has(t.requiredTicket())) {
 							Move.SingleMove newMove = new Move.SingleMove(player.piece(), source, t.requiredTicket(), destination);
+							//System.out.println("temp:" + newMove);
 							singleMoves.add(newMove);
 						}
 
@@ -177,7 +180,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					throw new IllegalArgumentException("illegal detective tickets");
 
 				}
-				//if (tempCheck) winner = ImmutableSet.of(mrX.piece());
 			}
 		}
 
@@ -208,21 +210,20 @@ public final class MyGameStateFactory implements Factory<GameState> {
 			TicketBoard newTicketBoard = ticket -> {
 				if (mrX.piece() == piece) {
 					return mrX.tickets().get(ticket);
-				} else {
+				}
+				else {
 					for (Player Detective : detectives)
 						if (Detective.piece() == piece)
 							return Detective.tickets().get(ticket);
 				}
 				return 0;
 			};
-			System.out.println(newTicketBoard);
 
 			boolean tempCheck = mrX.piece() == piece;
 
 			for (Player Detective : detectives)
 				if (Detective.piece() == piece) {
 					tempCheck = true;
-					//break;
 				}
 
 			if (!tempCheck) {
@@ -240,23 +241,17 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		@Nonnull
 		@Override
 		public ImmutableSet<Piece> getWinner() {
-			//Set<Piece> tempWinner = Set.copyOf(winner);//checks if none of the detectives can move
-			System.out.println(getAvailableMoves());
 			for (Player detective:detectives) {
 				if (detective.location() == mrX.location()) winner = ImmutableSet.copyOf(detectiveWinner());
 			}
 			if (!checkDetectivesTickets()) {
 				winner = ImmutableSet.of(mrX.piece());
-				System.out.println("st 1");
 			}
-			else if (log.size() == setup.moves.size() && remaining.contains(mrX.piece())) {
+			else if (log.size() == setup.moves.size() && remaining.contains(mrX.piece()) && remaining.size() == 1) {
 				winner = ImmutableSet.of(mrX.piece());
-				System.out.println("st 2");
 			}
 			else if (getAvailableMoves().isEmpty() && remaining.contains(mrX.piece())) {
 				winner = ImmutableSet.copyOf(detectiveWinner());
-				System.out.println("st 3");
-				//System.out.println(getAvailableMoves());
 			}
 
 
@@ -278,6 +273,11 @@ public final class MyGameStateFactory implements Factory<GameState> {
 				for (Piece item : remaining) {
 					for (Player Detective : detectives) {
 						if (item == Detective.piece()) {
+							if (makeSingleMoves(setup, detectives, Detective, Detective.location()).isEmpty()){
+								Set<Piece> newRemaining = new HashSet<>(Set.copyOf(remaining));
+								newRemaining.remove(Detective.piece());
+								remaining = ImmutableSet.copyOf(newRemaining);
+							}
 							allMoves.addAll(makeSingleMoves(setup, detectives, Detective, Detective.location()));
 						}
 					}
@@ -291,7 +291,7 @@ public final class MyGameStateFactory implements Factory<GameState> {
 		public GameState advance(Move move) {
 			//System.out.println(remaining);
 			moves = getAvailableMoves();
-			//System.out.println(moves);
+			System.out.println(moves);
 			if(!moves.contains(move)) throw new IllegalArgumentException("Illegal move: "+move);
 			//using an anonymous inner class
 
@@ -329,7 +329,6 @@ public final class MyGameStateFactory implements Factory<GameState> {
 					}
 					remaining = ImmutableSet.copyOf(newRemaining);
 					log = ImmutableList.copyOf(newLog);
-					//MyGameState newGameState = new MyGameState(setup, Remaining, Log, mrX, detectives);
 					return null;
 				}
 

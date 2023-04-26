@@ -1,6 +1,7 @@
 package uk.ac.bris.cs.scotlandyard.ui.ai;
 
 import java.lang.module.ModuleReference;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -11,6 +12,8 @@ import javax.annotation.Nonnull;
 import com.google.common.collect.ImmutableSet;
 import io.atlassian.fugue.Pair;
 import uk.ac.bris.cs.scotlandyard.model.*;
+
+import static java.lang.Math.*;
 
 public class MiniAI implements Ai {
 
@@ -25,22 +28,25 @@ public class MiniAI implements Ai {
 
 	}
 
-	/*public int score(Board board) {
-		GameSetup setup = board.getSetup();
-		ImmutableSet<Move> moves = board.getAvailableMoves();
-		ImmutableSet<Piece> players = board.getPlayers();
-		for(Move move : moves) {
-			for (Piece player :players) {
-				if (player.isDetective()) {
-					for (int node : setup.graph.adjacentNodes(move.source())) {
-						//if (board.getDetectiveLocation(Piece.Detective.valueOf(player.webColour())).hasValue(node))
-						{
+	public int findBestScore(Board board) {
+		//Move bestMove =
+		return 0;
+	}
 
-						}
-					}
+
+	public int score(Move move, Board board) {
+		Optional<Integer> temp;
+		int score = 0;
+		GameSetup setup = board.getSetup();
+		ImmutableSet<Piece> players = board.getPlayers();
+		for (Piece player :players) {
+			if (player.isDetective()) {
+				temp  = board.getDetectiveLocation(Piece.Detective.valueOf(player.webColour()));
+				score = score + abs(temp.get() - move.source());
+
+				//if (board.getDetectiveLocation(Piece.Detective.valueOf(player.webColour())).hasValue(node))
 				}
 			}
-		}
-		return 0;
-	}*/
+		return score;
+	}
 }
