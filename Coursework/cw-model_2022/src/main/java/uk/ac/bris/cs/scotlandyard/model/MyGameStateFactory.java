@@ -9,7 +9,7 @@ import uk.ac.bris.cs.scotlandyard.model.Piece.*;
 import uk.ac.bris.cs.scotlandyard.model.ScotlandYard.*;
 /**
  * cw-model
- * Stage 1: Complete this
+ * Stage 1: Complete this class
  */
 public final class MyGameStateFactory implements Factory<GameState> {
 	private final class MyGameState implements GameState {
